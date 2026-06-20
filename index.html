@@ -1,0 +1,2521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zenit</title>
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zenit">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233dd68c'/><text y='.9em' font-size='70' x='15'>💼</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.1/umd/index.min.js"></script>
+<style>
+/* ─── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:       #0d1117;
+  --s1:       #161b27;
+  --s2:       #1c2235;
+  --s3:       #232840;
+  --border:   #272d42;
+  --border2:  #333a55;
+  --text:     #dde1f0;
+  --text2:    #8892b0;
+  --text3:    #4a5270;
+  --green:    #3dd68c;
+  --green-d:  rgba(61,214,140,0.12);
+  --red:      #f0606a;
+  --red-d:    rgba(240,96,106,0.12);
+  --blue:     #5b8ef0;
+  --blue-d:   rgba(91,142,240,0.12);
+  --amber:    #f5a623;
+  --amber-d:  rgba(245,166,35,0.12);
+  --r:        8px;
+  --r2:       14px;
+}
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.mono { font-family: 'DM Mono', monospace; }
+
+/* ─── Layout ────────────────────────────────────────────── */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ─── Topbar ────────────────────────────────────────────── */
+.topbar {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-icon {
+  width: 32px; height: 32px;
+  background: var(--green);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.brand-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.brand-sub {
+  font-size: 0.72rem;
+  color: var(--text2);
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 0;
+}
+
+/* ─── Botões ────────────────────────────────────────────── */
+.btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid var(--border2);
+  background: var(--s2);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  line-height: 1;
+}
+.btn:hover { background: var(--s3); border-color: var(--text3); }
+.btn-green {
+  background: var(--green);
+  border-color: var(--green);
+  color: #081a10;
+  font-weight: 600;
+}
+.btn-green:hover { background: #2fc47c; border-color: #2fc47c; }
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text2);
+}
+.btn-ghost:hover { background: var(--s2); color: var(--text); border-color: var(--border); }
+input[type=file] { display: none; }
+
+/* ─── Navegação por abas ────────────────────────────────── */
+.nav {
+  background: var(--s1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.nav-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text2);
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.ativo {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+/* ─── Telas ─────────────────────────────────────────────── */
+.tela { display: none; padding: 28px; }
+.tela.ativa { display: block; }
+
+/* ─── Seção ─────────────────────────────────────────────── */
+.sec-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sec-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.sec-gap { margin-top: 32px; }
+
+/* ─── Cards genéricos ───────────────────────────────────── */
+.card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 20px;
+}
+.card-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 18px;
+}
+
+/* ─── KPIs ──────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.kpi {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 18px 18px 16px;
+  position: relative;
+}
+.kpi-top {
+  width: 32px; height: 3px;
+  border-radius: 2px;
+  background: var(--border2);
+  margin-bottom: 14px;
+}
+.kpi-label { font-size: 0.72rem; color: var(--text2); margin-bottom: 6px; }
+.kpi-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.kpi-sub { font-size: 0.7rem; color: var(--text3); margin-top: 6px; }
+.c-green { color: var(--green); }
+.c-red   { color: var(--red); }
+.c-blue  { color: var(--blue); }
+.c-amber { color: var(--amber); }
+
+/* Barra progresso */
+.prog-track {
+  background: var(--s3);
+  border-radius: 999px;
+  height: 4px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green);
+  transition: width 0.5s cubic-bezier(.4,0,.2,1), background 0.3s;
+}
+
+/* ─── Formulário ────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.form-full { grid-column: 1 / -1; }
+.field label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text2);
+  margin-bottom: 5px;
+  letter-spacing: 0.2px;
+}
+input[type=text],
+input[type=number],
+input[type=date],
+select,
+input[type=range] {
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 11px;
+  border-radius: var(--r);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type=date] { color-scheme: dark; }
+input:focus, select:focus { border-color: var(--green); }
+select option { background: var(--s2); }
+optgroup { color: var(--text2); font-size: 0.75rem; }
+optgroup option { color: var(--text); font-size: 0.84rem; }
+
+/* ─── Grids de layout ───────────────────────────────────── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.g3 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+
+/* ─── Tabela de movimentações ───────────────────────────── */
+.mov-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.mov-bar-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.mov-bar-filters select { width: auto; font-size: 0.78rem; padding: 7px 10px; }
+.mov-bar-count { font-size: 0.72rem; color: var(--text2); font-weight: 500; }
+
+.t { width: 100%; border-collapse: collapse; }
+.t th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.t td {
+  padding: 11px 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.t tr:last-child td { border-bottom: none; }
+.t .r { text-align: right; }
+.t .mono { font-family: 'DM Mono', monospace; font-size: 0.8rem; }
+
+.badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.badge-rec { background: var(--green-d); color: var(--green); }
+.badge-dep { background: var(--red-d);   color: var(--red); }
+
+.del-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 0.85rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+.del-btn:hover { background: var(--red-d); color: var(--red); }
+
+.empty {
+  text-align: center;
+  color: var(--text3);
+  font-size: 0.82rem;
+  padding: 28px 0;
+}
+
+/* ─── Fluxo de Caixa ────────────────────────────────────── */
+.fluxo-bloco { margin-bottom: 24px; }
+.fluxo-mes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 4px;
+}
+.fluxo-mes-nome {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.fluxo-resumo { display: flex; gap: 18px; font-size: 0.75rem; font-family: 'DM Mono', monospace; }
+.fluxo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.fluxo-item:last-child { border-bottom: none; }
+.fluxo-desc { font-size: 0.83rem; flex: 1; }
+.fluxo-cat  { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
+.fluxo-val  { font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+
+/* ─── DRE ───────────────────────────────────────────────── */
+.dre-t { width: 100%; border-collapse: collapse; }
+.dre-t td { padding: 10px 0; font-size: 0.84rem; border-bottom: 1px solid var(--border); }
+.dre-t tr:last-child td { border-bottom: none; }
+.dre-t .dlab { color: var(--text2); }
+.dre-t .dval { text-align: right; font-family: 'DM Mono', monospace; font-size: 0.82rem; font-weight: 500; }
+.dre-t .dgrp td { font-size: 0.65rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); padding-top: 18px; padding-bottom: 4px; border-bottom: none; }
+.dre-t .dind .dlab { padding-left: 14px; }
+.dre-t .dtot td { font-weight: 600; border-top: 1px solid var(--border2); border-bottom: none; padding-top: 12px; }
+
+/* ─── Relatórios ────────────────────────────────────────── */
+.rel-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.rel-kpi {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px;
+}
+.rel-kpi-label { font-size: 0.7rem; color: var(--text2); margin-bottom: 6px; }
+.rel-kpi-val   { font-family: 'DM Mono', monospace; font-size: 1.15rem; font-weight: 500; }
+
+/* ─── Metas ─────────────────────────────────────────────── */
+.meta-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.meta-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.meta-nome  { font-size: 0.88rem; font-weight: 600; }
+.meta-sub   { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
+.meta-pct   { font-family: 'DM Mono', monospace; font-size: 1.25rem; font-weight: 500; }
+.meta-rod   { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text2); margin-top: 8px; }
+.meta-input { display: flex; gap: 8px; align-items: flex-end; margin-top: 14px; flex-wrap: wrap; }
+.meta-input .field { flex: 1; min-width: 140px; }
+
+
+/* ─── Estoque ───────────────────────────────────────────────── */
+.est-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+.alerta-venc { background:var(--amber-d); border:1px solid var(--amber); border-radius:var(--r2); padding:14px 18px; margin-bottom:16px; font-size:0.83rem; color:var(--amber); }
+.alerta-venc strong { display:block; margin-bottom:4px; font-size:0.8rem; letter-spacing:0.5px; }
+/* ─── Leitor câmera ─────────────────────────────────────────── */
+.scanner-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:200; align-items:center; justify-content:center; }
+.scanner-modal.aberto { display:flex; }
+.scanner-box { background:var(--s1); border:1px solid var(--border2); border-radius:var(--r2); padding:24px; width:min(420px,95vw); }
+.scanner-box h3 { font-size:0.9rem; margin-bottom:14px; }
+#scannerVideo { width:100%; border-radius:var(--r); background:#000; display:block; }
+.scanner-resultado { margin-top:12px; font-size:0.82rem; color:var(--text2); min-height:22px; }
+/* ─── XML badge ─────────────────────────────────────────────── */
+.xml-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+/* ─── Toast ─────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 11px 18px;
+  border-radius: var(--r);
+  border: 1px solid var(--border2);
+  background: var(--s2);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 999;
+  max-width: 280px;
+}
+#toast.show    { opacity: 1; transform: translateY(0); }
+#toast.tok  { border-left: 3px solid var(--green); }
+#toast.terr { border-left: 3px solid var(--red); }
+
+/* ─── Responsivo ────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .tela { padding: 18px; }
+  .topbar { padding: 0 18px; }
+  .nav { padding: 0 12px; }
+}
+@media (max-width: 560px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .topbar-actions { gap: 6px; }
+  .topbar-actions .btn { font-size: 0.72rem; padding: 7px 10px; }
+}
+
+/* ─── Tela de Bloqueio ──────────────────────────────────── */
+#lockScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+#lockScreen.oculto { display: none; }
+.lock-box {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 36px;
+  width: min(340px, 92vw);
+  text-align: center;
+}
+.lock-icon {
+  font-size: 2.4rem;
+  margin-bottom: 16px;
+}
+.lock-titulo {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.lock-sub {
+  font-size: 0.78rem;
+  color: var(--text2);
+  margin-bottom: 28px;
+}
+.lock-dots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.lock-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  background: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.lock-dot.preenchido {
+  background: var(--green);
+  border-color: var(--green);
+}
+.lock-dot.erro {
+  background: var(--red);
+  border-color: var(--red);
+}
+.lock-teclado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 220px;
+  margin: 0 auto;
+}
+.lock-key {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 500;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 14px 0;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.lock-key:active, .lock-key:hover { background: var(--s3); }
+.lock-key.del { color: var(--text2); font-size: 0.9rem; }
+.lock-key.vazio { visibility: hidden; cursor: default; }
+.lock-erro-msg {
+  font-size: 0.78rem;
+  color: var(--red);
+  margin-top: 16px;
+  min-height: 20px;
+}
+.lock-config {
+  margin-top: 20px;
+}
+.lock-config-link {
+  font-size: 0.72rem;
+  color: var(--text3);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.lock-config-link:hover { color: var(--text2); }
+</style>
+</head>
+<body>
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- TELA DE BLOQUEIO                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <div class="lock-titulo">Zenit</div>
+    <div class="lock-sub" id="lockSub">Digite sua senha para entrar</div>
+    <div class="lock-dots">
+      <div class="lock-dot" id="d0"></div>
+      <div class="lock-dot" id="d1"></div>
+      <div class="lock-dot" id="d2"></div>
+      <div class="lock-dot" id="d3"></div>
+      <div class="lock-dot" id="d4"></div>
+    </div>
+    <div class="lock-teclado">
+      <button class="lock-key" onclick="lockDigito('1')">1</button>
+      <button class="lock-key" onclick="lockDigito('2')">2</button>
+      <button class="lock-key" onclick="lockDigito('3')">3</button>
+      <button class="lock-key" onclick="lockDigito('4')">4</button>
+      <button class="lock-key" onclick="lockDigito('5')">5</button>
+      <button class="lock-key" onclick="lockDigito('6')">6</button>
+      <button class="lock-key" onclick="lockDigito('7')">7</button>
+      <button class="lock-key" onclick="lockDigito('8')">8</button>
+      <button class="lock-key" onclick="lockDigito('9')">9</button>
+      <button class="lock-key vazio" disabled></button>
+      <button class="lock-key" onclick="lockDigito('0')">0</button>
+      <button class="lock-key del" onclick="lockApagar()">⌫</button>
+    </div>
+    <div class="lock-erro-msg" id="lockErro"></div>
+    <div class="lock-config">
+      <span class="lock-config-link" onclick="lockAbrirConfig()">⚙️ Alterar senha</span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">💼</div>
+      <div>
+        <div class="brand-name">Zenit</div>
+        <div class="brand-sub">Controle financeiro e de estoque</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-green" id="btnInstalar" onclick="instalarApp()" style="display:none">📲 Instalar App</button>
+      <button class="btn" onclick="exportarBackup()" title="Salva todos os dados num arquivo de backup">💾 Backup</button>
+      <label class="btn" style="cursor:pointer" title="Restaura um backup salvo anteriormente">
+        ♻️ Restaurar
+        <input type="file" id="backupInput" accept=".json">
+      </label>
+      <label class="btn" style="cursor:pointer">
+        ↑ Importar Excel
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      </label>
+      <button class="btn" onclick="exportarExcel()">↓ Exportar Excel</button>
+      <button class="btn btn-ghost" onclick="confirmarLimpar()">Limpar tudo</button>
+      <button class="btn" onclick="gerarXmlTeste()" title="Gera um XML de NF-e fictício para testar a importação">🧪 XML de Teste</button>
+    </div>
+  </div>
+
+  <!-- NAVEGAÇÃO -->
+  <nav class="nav">
+    <button class="nav-btn ativo" data-tela="dashboard" onclick="irPara('dashboard', this)">Dashboard</button>
+    <button class="nav-btn" data-tela="lancamentos"  onclick="irPara('lancamentos', this)">Lançamentos</button>
+    <button class="nav-btn" data-tela="fluxo"        onclick="irPara('fluxo', this)">Fluxo de Caixa</button>
+    <button class="nav-btn" data-tela="dre"          onclick="irPara('dre', this)">DRE</button>
+    <button class="nav-btn" data-tela="relatorios"   onclick="irPara('relatorios', this)">Relatórios</button>
+    <button class="nav-btn" data-tela="metas"        onclick="irPara('metas', this)">Metas</button>
+    <button class="nav-btn" data-tela="estoque"      onclick="irPara('estoque', this)">Estoque</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: DASHBOARD                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-dashboard" class="tela ativa">
+
+    <div class="sec-label">Visão geral</div>
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-top" style="background:var(--green)"></div>
+        <div class="kpi-label">Saldo em caixa</div>
+        <div class="kpi-val" id="kSaldo">R$ 0,00</div>
+        <div class="kpi-sub" id="kSaldoSub">receitas − despesas</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top" style="background:var(--blue)"></div>
+        <div class="kpi-label">Receita total</div>
+        <div class="kpi-val c-blue" id="kReceita">R$ 0,00</div>
+        <div class="kpi-sub" id="kRecSub">0 lançamentos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top" style="background:var(--red)"></div>
+        <div class="kpi-label">Despesas totais</div>
+        <div class="kpi-val c-red" id="kDespesa">R$ 0,00</div>
+        <div class="kpi-sub" id="kDespSub">0 lançamentos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top" style="background:var(--amber)"></div>
+        <div class="kpi-label">Margem operacional</div>
+        <div class="kpi-val" id="kMargem">—</div>
+        <div class="kpi-sub">lucro ÷ receita</div>
+      </div>
+      <div class="kpi" style="grid-column: span 2;">
+        <div class="kpi-top" style="background:var(--amber)"></div>
+        <div class="kpi-label">Limite MEI — R$ 81.000 / ano</div>
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div class="kpi-val" id="kMEIPct">0,0%</div>
+          <div class="kpi-sub" id="kMEISub" style="margin:0">utilizado</div>
+        </div>
+        <div class="prog-track" style="margin-top:10px">
+          <div class="prog-fill" id="kMEIFill" style="width:0%"></div>
+        </div>
+        <div class="kpi-sub" id="kMEIDetalhe" style="margin-top:6px">R$ 0,00 de R$ 81.000,00</div>
+      </div>
+    </div>
+
+    <div class="sec-label sec-gap">Diagnóstico</div>
+    <div class="card" id="insightCard" style="border-left:3px solid var(--green)">
+      <div style="font-size:0.84rem;line-height:1.7" id="insightTexto">Aguardando movimentações.</div>
+    </div>
+
+    <div class="sec-label sec-gap">Gráficos</div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Fluxo mensal</div>
+        <canvas id="chartFluxo"></canvas>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card">
+          <div class="card-title">Receitas por categoria</div>
+          <canvas id="chartRec"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Despesas por categoria</div>
+          <canvas id="chartDesp"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: LANÇAMENTOS                                      -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-lancamentos" class="tela">
+
+    <div class="g2" style="margin-bottom:24px">
+
+      <!-- Receita -->
+      <div class="card">
+        <div class="card-title" style="color:var(--green)">● Nova Receita</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" id="rData">
+          </div>
+          <div class="field">
+            <label>Valor (R$)</label>
+            <input type="number" id="rValor" placeholder="0,00" min="0.01" step="0.01">
+          </div>
+          <div class="field form-full">
+            <label>Descrição</label>
+            <input type="text" id="rDesc" placeholder="Ex: Venda para cliente X">
+          </div>
+          <div class="field form-full">
+            <label>Categoria</label>
+            <select id="rCat">
+              <optgroup label="Vendas de Produtos">
+                <option>Revenda de Mercadoria</option>
+                <option>Venda de Produto Fabricado</option>
+                <option>Venda de Produto Artesanal</option>
+                <option>Venda de Alimentos / Bebidas</option>
+              </optgroup>
+              <optgroup label="Serviços">
+                <option>Prestação de Serviço</option>
+                <option>Consultoria / Assessoria</option>
+                <option>Mão de Obra / Manutenção</option>
+                <option>Aula / Treinamento</option>
+                <option>Serviço de Entrega / Frete</option>
+                <option>Serviço de Beleza / Estética</option>
+                <option>Serviço de Saúde / Bem-estar</option>
+                <option>Serviço de TI / Design</option>
+                <option>Serviço de Limpeza / Conservação</option>
+              </optgroup>
+              <optgroup label="Outras Entradas">
+                <option>Comissão Recebida</option>
+                <option>Aluguel Recebido</option>
+                <option>Reembolso Recebido</option>
+                <option>Outras Receitas</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-green" style="width:100%;margin-top:4px" onclick="lancar('receita')">Adicionar Receita</button>
+        <div class="xml-row">
+          <label class="btn" style="cursor:pointer;flex:1;text-align:center">
+            📄 Importar NF-e XML (entrada)
+            <input type="file" id="xmlReceita" accept=".xml">
+          </label>
+        </div>
+      </div>
+
+      <!-- Despesa -->
+      <div class="card">
+        <div class="card-title" style="color:var(--red)">● Nova Despesa</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Data</label>
+            <input type="date" id="dData">
+          </div>
+          <div class="field">
+            <label>Valor (R$)</label>
+            <input type="number" id="dValor" placeholder="0,00" min="0.01" step="0.01">
+          </div>
+          <div class="field form-full">
+            <label>Descrição</label>
+            <input type="text" id="dDesc" placeholder="Ex: Aluguel de outubro">
+          </div>
+          <div class="field form-full">
+            <label>Categoria</label>
+            <select id="dCat">
+              <optgroup label="Custos Operacionais">
+                <option>Aluguel / Espaço Físico</option>
+                <option>Água / Luz / Gás / Internet</option>
+                <option>Telefone / Celular</option>
+                <option>Transporte / Combustível</option>
+                <option>Material de Escritório</option>
+                <option>Limpeza / Higiene do Espaço</option>
+                <option>Manutenção / Reparos</option>
+              </optgroup>
+              <optgroup label="Pessoal">
+                <option>Pró-labore</option>
+                <option>Ajuda de Custo / Diária</option>
+              </optgroup>
+              <optgroup label="Mercadoria / Estoque">
+                <option>Compra de Mercadoria para Revenda</option>
+                <option>Compra de Matéria-Prima</option>
+                <option>Embalagens / Etiquetas</option>
+              </optgroup>
+              <optgroup label="Marketing e Vendas">
+                <option>Publicidade / Anúncio Online</option>
+                <option>Material Gráfico / Impresso</option>
+                <option>Comissão de Venda Paga</option>
+                <option>Fotografia / Produção de Conteúdo</option>
+              </optgroup>
+              <optgroup label="Obrigações Legais">
+                <option>DAS (Guia MEI)</option>
+                <option>Taxa / Licença / Alvará</option>
+                <option>Contador / Assessoria</option>
+              </optgroup>
+              <optgroup label="Tecnologia e Ferramentas">
+                <option>Software / Assinatura de App</option>
+                <option>Equipamento / Ferramenta</option>
+                <option>Celular / Computador</option>
+              </optgroup>
+              <optgroup label="Financeiro">
+                <option>Tarifa Bancária</option>
+                <option>Taxa de Maquininha / Gateway</option>
+                <option>Juros / Multa</option>
+              </optgroup>
+              <optgroup label="Investimento">
+                <option>Investimento em Equipamento</option>
+                <option>Reforma / Melhoria do Espaço</option>
+              </optgroup>
+              <optgroup label="Outras">
+                <option>Outras Despesas</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-green" style="width:100%;margin-top:4px" onclick="lancar('despesa')">Adicionar Despesa</button>
+        <div class="xml-row">
+          <label class="btn" style="cursor:pointer;flex:1;text-align:center">
+            📄 Importar NF-e XML (saída/compra)
+            <input type="file" id="xmlDespesa" accept=".xml">
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+      <div class="mov-bar">
+        <div class="mov-bar-count" id="movCount">0 lançamentos</div>
+        <div class="mov-bar-filters">
+          <select id="fTipo" onchange="renderTabela()">
+            <option value="todos">Todos os tipos</option>
+            <option value="receita">Só receitas</option>
+            <option value="despesa">Só despesas</option>
+          </select>
+          <select id="fMes" onchange="renderTabela()">
+            <option value="todos">Todos os meses</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th class="r">Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="movBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="movEmpty" style="display:none">Nenhuma movimentação encontrada.</div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: FLUXO DE CAIXA                                   -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-fluxo" class="tela">
+    <div class="sec-label">Entradas e saídas por período</div>
+    <div class="card">
+      <div id="fluxoConteudo">
+        <div class="empty">Nenhuma movimentação registrada.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: DRE                                              -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-dre" class="tela">
+    <div class="sec-label">Demonstração do Resultado do Exercício</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">DRE Acumulada</div>
+        <table class="dre-t" id="dreTabela"></table>
+        <p style="font-size:0.68rem;color:var(--text3);margin-top:14px;line-height:1.6">Demonstração simplificada para MEI. Não substitui declaração fiscal oficial.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Resultado mensal</div>
+        <canvas id="chartDRE"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: RELATÓRIOS                                       -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-relatorios" class="tela">
+    <div class="sec-label">Indicadores gerais</div>
+    <div class="rel-kpis" id="relKpis"></div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Top 5 maiores receitas</div>
+        <div id="relTopRec"><div class="empty">Sem dados.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top 5 maiores despesas</div>
+        <div id="relTopDesp"><div class="empty">Sem dados.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: METAS                                            -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-metas" class="tela">
+    <div class="sec-label">Acompanhamento de metas</div>
+
+    <!-- Meta 1: Faturamento -->
+    <div class="meta-card">
+      <div class="meta-top">
+        <div>
+          <div class="meta-nome">Meta de Faturamento Mensal</div>
+          <div class="meta-sub">Quanto você quer faturar em média por mês</div>
+        </div>
+        <div class="meta-pct c-green" id="m1Pct">—</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="m1Fill" style="width:0%"></div></div>
+      <div class="meta-rod"><span id="m1Rod">Defina sua meta abaixo</span><span id="m1Val"></span></div>
+      <div class="meta-input">
+        <div class="field">
+          <label>Meta mensal (R$)</label>
+          <input type="number" id="m1Input" placeholder="Ex: 10000" min="1">
+        </div>
+        <button class="btn btn-green" onclick="salvarMeta(1)">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Meta 2: Margem -->
+    <div class="meta-card">
+      <div class="meta-top">
+        <div>
+          <div class="meta-nome">Meta de Margem de Lucro</div>
+          <div class="meta-sub">% de lucro sobre o faturamento total</div>
+        </div>
+        <div class="meta-pct" id="m2Pct">—</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="m2Fill" style="width:0%;background:var(--blue)"></div></div>
+      <div class="meta-rod"><span id="m2Rod">Defina sua meta abaixo</span><span id="m2Val"></span></div>
+      <div class="meta-input">
+        <div class="field">
+          <label>Meta de margem (%)</label>
+          <input type="number" id="m2Input" placeholder="Ex: 30" min="1" max="100">
+        </div>
+        <button class="btn btn-green" onclick="salvarMeta(2)">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Meta 3: Reserva -->
+    <div class="meta-card">
+      <div class="meta-top">
+        <div>
+          <div class="meta-nome">Meta de Reserva de Emergência</div>
+          <div class="meta-sub">% do lucro mensal que você quer guardar</div>
+        </div>
+        <div class="meta-pct" id="m3Pct">—</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="m3Fill" style="width:0%;background:var(--amber)"></div></div>
+      <div class="meta-rod"><span id="m3Rod">Defina sua meta abaixo</span><span id="m3Val"></span></div>
+      <div class="meta-input">
+        <div class="field">
+          <label>% do lucro para reserva</label>
+          <input type="number" id="m3Input" placeholder="Ex: 20" min="1" max="100">
+        </div>
+        <button class="btn btn-green" onclick="salvarMeta(3)">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Meta 4: Limite MEI (automática) -->
+    <div class="meta-card">
+      <div class="meta-top">
+        <div>
+          <div class="meta-nome">Controle do Limite MEI</div>
+          <div class="meta-sub">Faturamento acumulado vs R$ 81.000 anuais</div>
+        </div>
+        <div class="meta-pct" id="m4Pct">0%</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="m4Fill" style="width:0%;background:var(--amber)"></div></div>
+      <div class="meta-rod"><span id="m4Rod">Faturamento acumulado</span><span id="m4Val"></span></div>
+    </div>
+
+  </div>
+
+</div><!-- /app -->
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- TELA: ESTOQUE                                          -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="tela-estoque" class="tela">
+    <div class="sec-label">Produtos em estoque</div>
+
+    <!-- Alertas de vencimento -->
+    <div id="alertaVenc" style="display:none"></div>
+
+    <!-- Cadastro -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">Cadastrar / Atualizar Produto</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Código de Barras</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="eCodigo" placeholder="Ex: 7891000100103">
+            <button class="btn" onclick="abrirScanner('cadastro')" title="Escanear">📷</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Nome do Produto</label>
+          <input type="text" id="eNome" placeholder="Ex: Arroz 5kg">
+        </div>
+        <div class="field">
+          <label>Quantidade</label>
+          <input type="number" id="eQtd" placeholder="0" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Preço de Custo (R$)</label>
+          <input type="number" id="eCusto" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Preço de Venda (R$)</label>
+          <input type="number" id="eVenda" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Validade (opcional)</label>
+          <input type="date" id="eValidade">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="cadastrarProduto()">Salvar Produto</button>
+        <button class="btn" onclick="abrirScanner('venda')">📷 Escanear Venda</button>
+      </div>
+    </div>
+
+    <!-- Tabela estoque -->
+    <div class="card">
+      <div class="est-header">
+        <div class="mov-bar-count" id="estCount">0 produtos</div>
+        <input type="text" id="estBusca" placeholder="Buscar produto..." style="width:200px;font-size:0.8rem;padding:7px 10px" oninput="renderEstoque()">
+      </div>
+      <div style="overflow-x:auto">
+        <table class="t">
+          <thead>
+            <tr>
+              <th>Cód. Barras</th>
+              <th>Produto</th>
+              <th class="r">Qtd</th>
+              <th class="r">Custo</th>
+              <th class="r">Venda</th>
+              <th>Validade</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="estBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="estEmpty" style="display:none">Nenhum produto cadastrado.</div>
+    </div>
+  </div>
+
+  <!-- Modal Scanner -->
+  <div class="scanner-modal" id="scannerModal">
+    <div class="scanner-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3>📷 Leitor de Código de Barras</h3>
+        <button class="btn btn-ghost" onclick="fecharScanner()">✕ Fechar</button>
+      </div>
+      <video id="scannerVideo" playsinline autoplay muted></video>
+      <div class="scanner-resultado" id="scannerResultado">Aponte a câmera para o código de barras...</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <input type="text" id="scannerManual" placeholder="Ou digite o código manualmente" style="flex:1;font-size:0.82rem">
+        <button class="btn btn-green" onclick="confirmarCodigoManual()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal baixa de estoque (venda manual) -->
+  <div class="scanner-modal" id="modalBaixa">
+    <div class="scanner-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📦 Baixar do Estoque?</h3>
+        <button class="btn btn-ghost" onclick="fecharModalBaixa()">✕</button>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text2);margin-bottom:14px">
+        Você registrou uma venda. Qual produto saiu do estoque?
+      </p>
+      <div class="field" style="margin-bottom:10px">
+        <label>Produto</label>
+        <select id="baixaProduto"></select>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>Quantidade vendida</label>
+        <input type="number" id="baixaQtd" value="1" min="1">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green" style="flex:1" onclick="confirmarBaixa()">✅ Dar Baixa</button>
+        <button class="btn btn-ghost" onclick="fecharModalBaixa()">Não baixar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal rápido: adicionar ao estoque após compra manual -->
+  <div class="scanner-modal" id="modalEstRapido">
+    <div class="scanner-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📦 Adicionar ao Estoque?</h3>
+        <button class="btn btn-ghost" onclick="fecharModalEstRapido()">✕</button>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text2);margin-bottom:14px">
+        Você lançou uma compra de mercadoria. Deseja adicionar ao estoque?
+      </p>
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Nome do Produto</label>
+          <input type="text" id="merNome" placeholder="Nome do produto">
+        </div>
+        <div class="field">
+          <label>Quantidade</label>
+          <input type="number" id="merQtd" value="1" min="1">
+        </div>
+        <div class="field">
+          <label>Preço de Custo (R$)</label>
+          <input type="number" id="merCusto" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Preço de Venda (R$)</label>
+          <input type="number" id="merVenda" placeholder="0,00" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Código de Barras (opcional)</label>
+          <input type="text" id="merCodigo" placeholder="Ex: 7891000100103">
+        </div>
+        <div class="field">
+          <label>Validade (opcional)</label>
+          <input type="date" id="merValidade">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-green" style="flex:1" onclick="confirmarEstoqueRapido()">✅ Adicionar ao Estoque</button>
+        <button class="btn btn-ghost" onclick="fecharModalEstRapido()">Não, obrigado</button>
+      </div>
+    </div>
+  </div>
+
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ESTADO
+═══════════════════════════════════════════════════════════ */
+const TETO_MEI = 81000;
+let tx = [];        // transacoes
+let metas = {};     // metas salvas
+let ch = {};        // charts ativos
+
+/* ═══════════════════════════════════════════════════════════
+   PERSISTÊNCIA
+═══════════════════════════════════════════════════════════ */
+function salvar() {
+  localStorage.setItem('mei_tx_v2', JSON.stringify(tx));
+}
+function carregar() {
+  try { tx = JSON.parse(localStorage.getItem('mei_tx_v2') || '[]'); } catch(e) { tx = []; }
+  try { metas = JSON.parse(localStorage.getItem('mei_metas_v2') || '{}'); } catch(e) { metas = {}; }
+  // Preencher inputs de metas com valores salvos
+  if (metas[1]) document.getElementById('m1Input').value = metas[1];
+  if (metas[2]) document.getElementById('m2Input').value = metas[2];
+  if (metas[3]) document.getElementById('m3Input').value = metas[3];
+}
+function salvarMetas() {
+  localStorage.setItem('mei_metas_v2', JSON.stringify(metas));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITÁRIOS
+═══════════════════════════════════════════════════════════ */
+const R = v => Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+const N = (v,d=1) => Number(v).toLocaleString('pt-BR', { minimumFractionDigits:d, maximumFractionDigits:d });
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const mesKey = d => String(d).slice(0, 7);
+const mesLabel = k => {
+  const [y, m] = k.split('-');
+  const s = new Date(+y, +m-1).toLocaleDateString('pt-BR', { month:'short', year:'2-digit' });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+const fmtData = d => {
+  const p = String(d).split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+};
+
+function toast(msg, tipo) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show t' + (tipo || 'ok');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 2800);
+}
+
+function validar(data, desc, valor) {
+  if (!data)        { toast('Informe a data.', 'err'); return false; }
+  if (!desc.trim()) { toast('Informe a descrição.', 'err'); return false; }
+  if (!(valor > 0)) { toast('Informe um valor maior que zero.', 'err'); return false; }
+  return true;
+}
+
+function limparCampos(p) {
+  ['Data','Valor','Desc'].forEach(s => { document.getElementById(p+s).value = ''; });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVEGAÇÃO
+═══════════════════════════════════════════════════════════ */
+function irPara(id, btn) {
+  // desativar tudo
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+  // ativar alvo
+  document.getElementById('tela-' + id).classList.add('ativa');
+  btn.classList.add('ativo');
+  // renderizar tela específica
+  if (id === 'lancamentos') renderTabela();
+  if (id === 'fluxo')       renderFluxo();
+  if (id === 'dre')         renderDRE();
+  if (id === 'relatorios')  renderRelatorios();
+  if (id === 'metas')       renderMetas();
+  if (id === 'estoque')     { renderEstoque(); verificarVencimentos(); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LANÇAR / EXCLUIR
+═══════════════════════════════════════════════════════════ */
+function lancar(tipo) {
+  const p = tipo === 'receita' ? 'r' : 'd';
+  const data  = document.getElementById(p + 'Data').value;
+  const valor = Number(document.getElementById(p + 'Valor').value);
+  const desc  = document.getElementById(p + 'Desc').value;
+  const cat   = document.getElementById(p + 'Cat').value;
+  if (!validar(data, desc, valor)) return;
+  tx.push({ id: uid(), tipo, data, desc, cat, valor });
+  salvar();
+  limparCampos(p);
+  toast(tipo === 'receita' ? 'Receita adicionada!' : 'Despesa adicionada!');
+  atualizarDashboard();
+  renderTabela();
+
+  // Se for compra de mercadoria, oferecer adicionar ao estoque
+  const catsMercadoria = ['Compra de Mercadoria para Revenda','Compra de Matéria-Prima','Embalagens / Etiquetas'];
+  if (tipo === 'despesa' && catsMercadoria.includes(cat)) {
+    abrirModalEstoqueRapido(desc, valor);
+  }
+
+  // Se for venda de produto, oferecer baixa no estoque
+  const catsVenda = ['Revenda de Mercadoria','Venda de Produto Fabricado','Venda de Produto Artesanal','Venda de Alimentos / Bebidas'];
+  if (tipo === 'receita' && catsVenda.includes(cat) && estoque.length > 0) {
+    abrirModalBaixaEstoque();
+  }
+}
+
+
+/* ─── Modal de baixa de estoque (venda manual) ───────────── */
+function abrirModalBaixaEstoque() {
+  // Montar lista de produtos com estoque > 0
+  const disponiveis = estoque.filter(p => p.qtd > 0);
+  const sel = document.getElementById('baixaProduto');
+  sel.innerHTML = '<option value="">— selecione o produto —</option>';
+  disponiveis.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.nome + ' (estoque: ' + p.qtd + ')';
+    sel.appendChild(o);
+  });
+  document.getElementById('baixaQtd').value = 1;
+  document.getElementById('modalBaixa').classList.add('aberto');
+}
+
+function fecharModalBaixa() {
+  document.getElementById('modalBaixa').classList.remove('aberto');
+}
+
+function confirmarBaixa() {
+  const id  = document.getElementById('baixaProduto').value;
+  const qtd = Number(document.getElementById('baixaQtd').value) || 1;
+  if (!id) { fecharModalBaixa(); return; } // ignorar se não selecionou
+  const p = estoque.find(x => x.id === id);
+  if (!p) { fecharModalBaixa(); return; }
+  if (p.qtd < qtd) { toast('Estoque insuficiente! Disponível: ' + p.qtd, 'err'); return; }
+  p.qtd -= qtd;
+  salvarEstoque();
+  fecharModalBaixa();
+  toast('✅ Baixa de ' + qtd + 'x ' + p.nome + ' — estoque: ' + p.qtd);
+  if (document.getElementById('tela-estoque').classList.contains('ativa')) {
+    renderEstoque(); verificarVencimentos();
+  }
+}
+
+/* Modal rápido para adicionar ao estoque após lançar despesa de mercadoria */
+function abrirModalEstoqueRapido(descricao, valorUnitario) {
+  const modal = document.getElementById('modalEstRapido');
+  document.getElementById('merNome').value    = descricao;
+  document.getElementById('merCusto').value   = valorUnitario;
+  document.getElementById('merQtd').value     = 1;
+  document.getElementById('merCodigo').value  = '';
+  document.getElementById('merValidade').value = '';
+  document.getElementById('merVenda').value   = '';
+  modal.classList.add('aberto');
+}
+
+function fecharModalEstRapido() {
+  document.getElementById('modalEstRapido').classList.remove('aberto');
+}
+
+function confirmarEstoqueRapido() {
+  const nome     = document.getElementById('merNome').value.trim();
+  const qtd      = Number(document.getElementById('merQtd').value) || 1;
+  const custo    = Number(document.getElementById('merCusto').value) || 0;
+  const venda    = Number(document.getElementById('merVenda').value) || 0;
+  const codigo   = document.getElementById('merCodigo').value.trim();
+  const validade = document.getElementById('merValidade').value;
+
+  if (!nome) { toast('Informe o nome do produto.', 'err'); return; }
+
+  const cod = codigo || uid();
+  const idx = codigo ? estoque.findIndex(p => p.codigo === codigo) : -1;
+  if (idx >= 0) {
+    estoque[idx].qtd += qtd;
+    if (custo) estoque[idx].custo = custo;
+  } else {
+    estoque.push({ id: uid(), codigo: cod, nome, qtd, custo, venda, validade });
+  }
+  salvarEstoque();
+  fecharModalEstRapido();
+  toast('✅ Produto adicionado ao estoque!');
+  if (document.getElementById('tela-estoque').classList.contains('ativa')) {
+    renderEstoque(); verificarVencimentos();
+  }
+}
+
+function excluir(id) {
+  if (!confirm('Excluir este lançamento?')) return;
+  tx = tx.filter(t => t.id !== id);
+  salvar();
+  toast('Lançamento excluído.');
+  atualizarDashboard();
+  renderTabela();
+}
+
+function confirmarLimpar() {
+  if (!confirm('Apagar TODOS os lançamentos? Não pode ser desfeito.')) return;
+  tx = [];
+  salvar();
+  toast('Dados apagados.');
+  atualizarDashboard();
+  renderTabela();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CÁLCULOS CENTRAIS
+═══════════════════════════════════════════════════════════ */
+function calc() {
+  const rec  = tx.filter(t => t.tipo === 'receita');
+  const desp = tx.filter(t => t.tipo === 'despesa');
+  const totR = rec.reduce((s,t) => s + t.valor, 0);
+  const totD = desp.reduce((s,t) => s + t.valor, 0);
+  const lucro = totR - totD;
+  const margem = totR > 0 ? (lucro / totR) * 100 : null;
+  const pctMEI = (totR / TETO_MEI) * 100;
+  const meses = [...new Set(tx.map(t => mesKey(t.data)))].sort();
+  const fatMedio = meses.length ? totR / meses.length : 0;
+  return { rec, desp, totR, totD, lucro, margem, pctMEI, meses, fatMedio };
+}
+
+function sumCat(lista) {
+  const m = {};
+  lista.forEach(t => { m[t.cat] = (m[t.cat] || 0) + t.valor; });
+  return m;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════ */
+function atualizarDashboard() {
+  const c = calc();
+
+  // KPIs
+  const sEl = document.getElementById('kSaldo');
+  sEl.textContent = R(c.lucro);
+  sEl.className = 'kpi-val ' + (c.lucro >= 0 ? 'c-green' : 'c-red');
+  document.getElementById('kSaldoSub').textContent = c.lucro >= 0 ? 'resultado positivo' : 'resultado negativo';
+
+  document.getElementById('kReceita').textContent = R(c.totR);
+  document.getElementById('kRecSub').textContent  = c.rec.length + ' lançamento(s)';
+  document.getElementById('kDespesa').textContent = R(c.totD);
+  document.getElementById('kDespSub').textContent = c.desp.length + ' lançamento(s)';
+
+  const mEl = document.getElementById('kMargem');
+  mEl.textContent = c.margem !== null ? N(c.margem) + '%' : '—';
+  mEl.className = 'kpi-val ' + (c.margem === null ? '' : c.margem >= 0 ? 'c-green' : 'c-red');
+
+  const pct = Math.min(c.pctMEI, 100);
+  document.getElementById('kMEIPct').textContent = N(c.pctMEI) + '%';
+  document.getElementById('kMEIPct').className = 'kpi-val ' + (c.pctMEI > 80 ? 'c-red' : c.pctMEI > 60 ? 'c-amber' : 'c-green');
+  const fill = document.getElementById('kMEIFill');
+  fill.style.width = pct + '%';
+  fill.style.background = c.pctMEI > 80 ? 'var(--red)' : c.pctMEI > 60 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('kMEIDetalhe').textContent = R(c.totR) + ' de ' + R(TETO_MEI);
+
+  // Insight
+  let msg = '', cor = 'var(--green)';
+  if (c.totR === 0) {
+    msg = 'Nenhuma receita registrada ainda. Adicione seus primeiros lançamentos para ver a análise.';
+    cor = 'var(--text3)';
+  } else if (c.margem < 0) {
+    msg = 'Resultado negativo — as despesas superam as receitas. Revise seus custos com urgência.';
+    cor = 'var(--red)';
+  } else if (c.margem < 20) {
+    msg = `Margem de ${N(c.margem)}% — abaixo do ideal. Avalie redução de custos ou reajuste de preços.`;
+    cor = 'var(--amber)';
+  } else if (c.margem < 40) {
+    msg = `Margem de ${N(c.margem)}% — razoável. Ainda há espaço para melhorar a rentabilidade.`;
+    cor = 'var(--blue)';
+  } else {
+    msg = `Margem de ${N(c.margem)}% — excelente! Empresa com saúde financeira sólida.`;
+    cor = 'var(--green)';
+  }
+  if (c.pctMEI > 80) {
+    msg += `  ·  ⚠ Faturamento em ${N(c.pctMEI)}% do limite MEI — consulte um contador.`;
+    cor = 'var(--amber)';
+  }
+  document.getElementById('insightTexto').textContent = msg;
+  document.getElementById('insightCard').style.borderLeftColor = cor;
+
+  // Gráficos
+  renderGraficos(c);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GRÁFICOS DO DASHBOARD
+═══════════════════════════════════════════════════════════ */
+Chart.defaults.color = '#8892b0';
+Chart.defaults.borderColor = '#272d42';
+Chart.defaults.font = { family: 'DM Sans', size: 11 };
+
+function destroyChart(nome) {
+  if (ch[nome]) { ch[nome].destroy(); delete ch[nome]; }
+}
+
+function renderGraficos(c) {
+  const meses   = c.meses;
+  const labels  = meses.map(mesLabel);
+  const recMes  = meses.map(k => c.rec.filter(t => t.data.startsWith(k)).reduce((s,t)=>s+t.valor,0));
+  const despMes = meses.map(k => c.desp.filter(t => t.data.startsWith(k)).reduce((s,t)=>s+t.valor,0));
+  const lucMes  = recMes.map((r,i) => r - despMes[i]);
+
+  // Fluxo mensal
+  destroyChart('fluxo');
+  ch.fluxo = new Chart(document.getElementById('chartFluxo'), {
+    type: 'bar',
+    data: {
+      labels: labels.length ? labels : ['—'],
+      datasets: [
+        { label: 'Receitas',  data: recMes,  backgroundColor: 'rgba(61,214,140,0.65)',  borderRadius: 5 },
+        { label: 'Despesas',  data: despMes, backgroundColor: 'rgba(240,96,106,0.65)', borderRadius: 5 },
+        { label: 'Lucro',     data: lucMes,  backgroundColor: 'rgba(91,142,240,0.65)', borderRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14 } } },
+      scales: {
+        x: { grid: { color: '#1c2235' } },
+        y: { grid: { color: '#1c2235' }, ticks: { callback: v => 'R$' + (Math.abs(v)>=1000 ? (v/1000).toFixed(0)+'k' : v) } }
+      }
+    }
+  });
+
+  // Receitas por categoria (donut)
+  const catR = sumCat(c.rec);
+  const catRKeys = Object.keys(catR);
+  const pal = ['#3dd68c','#5b8ef0','#f5a623','#f0606a','#a78bfa','#34d399','#60a5fa'];
+  destroyChart('rec');
+  ch.rec = new Chart(document.getElementById('chartRec'), {
+    type: 'doughnut',
+    data: {
+      labels: catRKeys.length ? catRKeys : ['Sem dados'],
+      datasets: [{
+        data: catRKeys.length ? Object.values(catR) : [1],
+        backgroundColor: catRKeys.length ? pal.slice(0, catRKeys.length) : ['#272d42'],
+        borderWidth: 0
+      }]
+    },
+    options: { cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, padding: 10, font: { size: 10 } } } } }
+  });
+
+  // Despesas por categoria (barras horizontais)
+  const catD = sumCat(c.desp);
+  const catDEntries = Object.entries(catD).sort((a,b) => b[1]-a[1]);
+  destroyChart('desp');
+  ch.desp = new Chart(document.getElementById('chartDesp'), {
+    type: 'bar',
+    data: {
+      labels: catDEntries.length ? catDEntries.map(e=>e[0]) : ['Sem dados'],
+      datasets: [{
+        data: catDEntries.length ? catDEntries.map(e=>e[1]) : [0],
+        backgroundColor: 'rgba(240,96,106,0.6)',
+        borderRadius: 5
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1c2235' }, ticks: { callback: v => 'R$'+(v>=1000?(v/1000).toFixed(0)+'k':v) } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TABELA DE MOVIMENTAÇÕES
+═══════════════════════════════════════════════════════════ */
+function atualizarFiltroMes() {
+  const sel = document.getElementById('fMes');
+  const atual = sel.value;
+  const meses = [...new Set(tx.map(t => mesKey(t.data)))].sort().reverse();
+  sel.innerHTML = '<option value="todos">Todos os meses</option>';
+  meses.forEach(k => {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = mesLabel(k);
+    if (k === atual) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function renderTabela() {
+  atualizarFiltroMes();
+  const tipo = document.getElementById('fTipo').value;
+  const mes  = document.getElementById('fMes').value;
+
+  let lista = [...tx];
+  if (tipo !== 'todos') lista = lista.filter(t => t.tipo === tipo);
+  if (mes  !== 'todos') lista = lista.filter(t => t.data.startsWith(mes));
+  lista.sort((a,b) => b.data.localeCompare(a.data));
+
+  document.getElementById('movCount').textContent = lista.length + ' lançamento(s)';
+  document.getElementById('movEmpty').style.display = lista.length ? 'none' : 'block';
+
+  document.getElementById('movBody').innerHTML = lista.map(t => `
+    <tr>
+      <td style="color:var(--text2);white-space:nowrap">${fmtData(t.data)}</td>
+      <td><span class="badge badge-${t.tipo === 'receita' ? 'rec' : 'dep'}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</span></td>
+      <td>${t.desc}</td>
+      <td style="color:var(--text2)">${t.cat}</td>
+      <td class="r mono" style="color:${t.tipo === 'receita' ? 'var(--green)' : 'var(--red)'}">${R(t.valor)}</td>
+      <td class="r"><button class="del-btn" onclick="excluir('${t.id}')">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FLUXO DE CAIXA
+═══════════════════════════════════════════════════════════ */
+function renderFluxo() {
+  const meses = [...new Set(tx.map(t => mesKey(t.data)))].sort().reverse();
+  const el = document.getElementById('fluxoConteudo');
+
+  if (!meses.length) {
+    el.innerHTML = '<div class="empty">Nenhuma movimentação registrada.</div>';
+    return;
+  }
+
+  el.innerHTML = meses.map(k => {
+    const itens = tx.filter(t => t.data.startsWith(k)).sort((a,b) => b.data.localeCompare(a.data));
+    const totR  = itens.filter(t=>t.tipo==='receita').reduce((s,t)=>s+t.valor,0);
+    const totD  = itens.filter(t=>t.tipo==='despesa').reduce((s,t)=>s+t.valor,0);
+    const saldo = totR - totD;
+    const linhas = itens.map(t => `
+      <div class="fluxo-item">
+        <div style="flex:1">
+          <div class="fluxo-desc">${t.desc}</div>
+          <div class="fluxo-cat">${fmtData(t.data)} · ${t.cat}</div>
+        </div>
+        <div class="fluxo-val" style="color:${t.tipo==='receita'?'var(--green)':'var(--red)'}">${t.tipo==='receita'?'+':'−'}${R(t.valor)}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="fluxo-bloco" style="margin-bottom:24px">
+        <div class="fluxo-mes-header">
+          <span class="fluxo-mes-nome">${mesLabel(k)}</span>
+          <div class="fluxo-resumo">
+            <span style="color:var(--green)">+${R(totR)}</span>
+            <span style="color:var(--red)">−${R(totD)}</span>
+            <span style="color:${saldo>=0?'var(--green)':'var(--red)'};font-weight:600">${R(saldo)}</span>
+          </div>
+        </div>
+        ${linhas}
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DRE
+═══════════════════════════════════════════════════════════ */
+function renderDRE() {
+  const c = calc();
+  const prolabore = c.desp.filter(t=>t.cat==='Pró-labore').reduce((s,t)=>s+t.valor,0);
+  const das       = c.desp.filter(t=>t.cat==='DAS (Guia MEI)').reduce((s,t)=>s+t.valor,0);
+  const compras   = c.desp.filter(t=>t.cat.includes('Mercadoria')||t.cat.includes('Matéria')).reduce((s,t)=>s+t.valor,0);
+  const outras    = Math.max(0, c.totD - prolabore - das - compras);
+  const margem    = c.totR > 0 ? N(c.lucro/c.totR*100) : '—';
+
+  document.getElementById('dreTabela').innerHTML = `
+    <tr class="dgrp"><td colspan="2">Receitas</td></tr>
+    <tr class="dind"><td class="dlab">Receita Bruta</td><td class="dval c-green">${R(c.totR)}</td></tr>
+    <tr class="dgrp"><td colspan="2">Custos e Despesas</td></tr>
+    <tr class="dind"><td class="dlab">(−) Compras / Mercadoria / MP</td><td class="dval">(${R(compras)})</td></tr>
+    <tr class="dind"><td class="dlab">(−) Despesas operacionais</td><td class="dval">(${R(outras)})</td></tr>
+    <tr class="dind"><td class="dlab">(−) Pró-labore</td><td class="dval">(${R(prolabore)})</td></tr>
+    <tr class="dind"><td class="dlab">(−) DAS / Impostos</td><td class="dval">(${R(das)})</td></tr>
+    <tr class="dtot"><td>Lucro Líquido</td><td class="dval ${c.lucro>=0?'c-green':'c-red'}">${R(c.lucro)}</td></tr>
+    <tr><td class="dlab" style="padding-top:10px;font-size:0.8rem">Margem líquida</td><td class="dval" style="padding-top:10px">${margem}${margem!=='—'?'%':''}</td></tr>
+  `;
+
+  // Gráfico DRE
+  destroyChart('dre');
+  const labels  = c.meses.map(mesLabel);
+  const recMes  = c.meses.map(k => c.rec.filter(t=>t.data.startsWith(k)).reduce((s,t)=>s+t.valor,0));
+  const despMes = c.meses.map(k => c.desp.filter(t=>t.data.startsWith(k)).reduce((s,t)=>s+t.valor,0));
+  const lucMes  = recMes.map((r,i)=>r-despMes[i]);
+
+  ch.dre = new Chart(document.getElementById('chartDRE'), {
+    type: 'bar',
+    data: {
+      labels: labels.length ? labels : ['—'],
+      datasets: [
+        { label:'Receita',  data:recMes,  backgroundColor:'rgba(61,214,140,0.65)',  borderRadius:5 },
+        { label:'Despesas', data:despMes, backgroundColor:'rgba(240,96,106,0.65)', borderRadius:5 },
+        { label:'Lucro',    data:lucMes,  backgroundColor:'rgba(91,142,240,0.65)', borderRadius:5 }
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12 } } },
+      scales:{
+        x:{ grid:{ color:'#1c2235' } },
+        y:{ grid:{ color:'#1c2235' }, ticks:{ callback: v=>'R$'+(Math.abs(v)>=1000?(v/1000).toFixed(0)+'k':v) } }
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RELATÓRIOS
+═══════════════════════════════════════════════════════════ */
+function renderRelatorios() {
+  const c = calc();
+  const maiorR = c.rec.length  ? Math.max(...c.rec.map(t=>t.valor))  : 0;
+  const maiorD = c.desp.length ? Math.max(...c.desp.map(t=>t.valor)) : 0;
+  const ticket = c.rec.length  ? c.totR / c.rec.length : 0;
+
+  document.getElementById('relKpis').innerHTML = `
+    <div class="rel-kpi"><div class="rel-kpi-label">Total de lançamentos</div><div class="rel-kpi-val">${tx.length}</div></div>
+    <div class="rel-kpi"><div class="rel-kpi-label">Maior receita única</div><div class="rel-kpi-val c-green">${R(maiorR)}</div></div>
+    <div class="rel-kpi"><div class="rel-kpi-label">Maior despesa única</div><div class="rel-kpi-val c-red">${R(maiorD)}</div></div>
+    <div class="rel-kpi"><div class="rel-kpi-label">Ticket médio (receitas)</div><div class="rel-kpi-val">${R(ticket)}</div></div>
+    <div class="rel-kpi"><div class="rel-kpi-label">Faturamento médio/mês</div><div class="rel-kpi-val">${R(c.fatMedio)}</div></div>
+    <div class="rel-kpi"><div class="rel-kpi-label">Meses com registros</div><div class="rel-kpi-val">${c.meses.length}</div></div>
+  `;
+
+  const topHtml = (lista, cor) => {
+    if (!lista.length) return '<div class="empty">Sem dados.</div>';
+    return lista.slice(0,5).map((t,i) => `
+      <div class="fluxo-item">
+        <div style="flex:1">
+          <div class="fluxo-desc">${i+1}. ${t.desc}</div>
+          <div class="fluxo-cat">${fmtData(t.data)} · ${t.cat}</div>
+        </div>
+        <div class="fluxo-val" style="color:${cor}">${R(t.valor)}</div>
+      </div>`).join('');
+  };
+
+  document.getElementById('relTopRec').innerHTML  = topHtml([...c.rec].sort((a,b)=>b.valor-a.valor),  'var(--green)');
+  document.getElementById('relTopDesp').innerHTML = topHtml([...c.desp].sort((a,b)=>b.valor-a.valor), 'var(--red)');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   METAS
+═══════════════════════════════════════════════════════════ */
+function salvarMeta(n) {
+  const el = document.getElementById('m' + n + 'Input');
+  const v  = Number(el.value);
+  if (!(v > 0)) { toast('Informe um valor válido.', 'err'); return; }
+  metas[n] = v;
+  salvarMetas();
+  toast('Meta salva!');
+  renderMetas();
+}
+
+function setMeta(id, pct, val, rod, cor, rodt, valt) {
+  const pEl = document.getElementById(id + 'Pct');
+  pEl.textContent = val;
+  pEl.className   = 'meta-pct ' + cor;
+  const fEl = document.getElementById(id + 'Fill');
+  fEl.style.width = Math.min(Math.max(pct,0), 100) + '%';
+  document.getElementById(id + 'Rod').textContent = rodt;
+  document.getElementById(id + 'Val').textContent = valt;
+}
+
+function renderMetas() {
+  const c = calc();
+
+  // Meta 1: faturamento
+  if (metas[1]) {
+    const pct = (c.fatMedio / metas[1]) * 100;
+    const cor = pct >= 100 ? 'c-green' : pct >= 70 ? 'c-amber' : 'c-red';
+    document.getElementById('m1Fill').style.width = Math.min(pct,100) + '%';
+    document.getElementById('m1Fill').style.background = pct>=100?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
+    document.getElementById('m1Pct').textContent = N(pct) + '%';
+    document.getElementById('m1Pct').className   = 'meta-pct ' + cor;
+    document.getElementById('m1Rod').textContent = 'Média mensal atual: ' + R(c.fatMedio);
+    document.getElementById('m1Val').textContent = 'Meta: ' + R(metas[1]);
+  } else {
+    document.getElementById('m1Pct').textContent = '—';
+    document.getElementById('m1Fill').style.width = '0%';
+    document.getElementById('m1Rod').textContent = 'Defina sua meta abaixo';
+    document.getElementById('m1Val').textContent = '';
+  }
+
+  // Meta 2: margem
+  if (metas[2]) {
+    const margemAtual = c.totR > 0 ? (c.lucro / c.totR) * 100 : 0;
+    const pct = (margemAtual / metas[2]) * 100;
+    const cor = pct >= 100 ? 'c-green' : pct >= 60 ? 'c-amber' : 'c-red';
+    document.getElementById('m2Fill').style.width = Math.min(Math.max(pct,0),100) + '%';
+    document.getElementById('m2Fill').style.background = pct>=100?'var(--green)':pct>=60?'var(--amber)':'var(--red)';
+    document.getElementById('m2Pct').textContent = N(margemAtual) + '%';
+    document.getElementById('m2Pct').className   = 'meta-pct ' + cor;
+    document.getElementById('m2Rod').textContent = 'Margem atual: ' + N(margemAtual) + '%';
+    document.getElementById('m2Val').textContent = 'Meta: ' + metas[2] + '%';
+  } else {
+    const margemAtual = c.totR > 0 ? N(c.lucro/c.totR*100) + '%' : '—';
+    document.getElementById('m2Pct').textContent = margemAtual;
+    document.getElementById('m2Pct').className   = 'meta-pct';
+    document.getElementById('m2Fill').style.width = '0%';
+    document.getElementById('m2Rod').textContent = 'Defina sua meta abaixo';
+    document.getElementById('m2Val').textContent = '';
+  }
+
+  // Meta 3: reserva
+  if (metas[3]) {
+    const reservaIdeal = c.lucro > 0 ? c.lucro * (metas[3]/100) : 0;
+    document.getElementById('m3Fill').style.width = c.lucro > 0 ? Math.min(metas[3],100) + '%' : '0%';
+    document.getElementById('m3Pct').textContent = metas[3] + '%';
+    document.getElementById('m3Pct').className   = 'meta-pct c-amber';
+    document.getElementById('m3Rod').textContent = c.lucro > 0 ? 'Guardar ' + R(reservaIdeal) + ' do lucro atual' : 'Lucro insuficiente para reserva';
+    document.getElementById('m3Val').textContent = 'Meta: ' + metas[3] + '% do lucro';
+  } else {
+    document.getElementById('m3Pct').textContent = '—';
+    document.getElementById('m3Fill').style.width = '0%';
+    document.getElementById('m3Rod').textContent = 'Defina sua meta abaixo';
+    document.getElementById('m3Val').textContent = '';
+  }
+
+  // Meta 4: limite MEI (automática)
+  const pctMEI = Math.min(c.pctMEI, 100);
+  document.getElementById('m4Fill').style.width = pctMEI + '%';
+  document.getElementById('m4Fill').style.background = c.pctMEI>80?'var(--red)':c.pctMEI>60?'var(--amber)':'var(--green)';
+  document.getElementById('m4Pct').textContent = N(c.pctMEI) + '%';
+  document.getElementById('m4Pct').className   = 'meta-pct ' + (c.pctMEI>80?'c-red':c.pctMEI>60?'c-amber':'c-green');
+  document.getElementById('m4Rod').textContent = R(c.totR) + ' faturados no total';
+  document.getElementById('m4Val').textContent = 'Limite: ' + R(TETO_MEI);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   IMPORTAR / EXPORTAR EXCEL
+═══════════════════════════════════════════════════════════ */
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const wb   = XLSX.read(new Uint8Array(ev.target.result), { type:'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      let ok = 0;
+      rows.forEach(row => {
+        const tipo  = String(row.Tipo || '').toLowerCase().trim();
+        const valor = Number(row.Valor);
+        if (!row.Data || !(valor > 0) || !['receita','despesa'].includes(tipo)) return;
+        tx.push({ id:uid(), tipo, data:String(row.Data), desc:String(row.Descricao||''), cat:String(row.Categoria||'Outras'), valor });
+        ok++;
+      });
+      salvar();
+      atualizarDashboard();
+      toast(ok + ' lançamentos importados!');
+    } catch(err) {
+      toast('Erro ao ler o arquivo.', 'err');
+    }
+    e.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function exportarExcel() {
+  if (!tx.length) { toast('Nada para exportar.', 'err'); return; }
+  const rows = [...tx]
+    .sort((a,b) => a.data.localeCompare(b.data))
+    .map(t => ({ Data:t.data, Tipo:t.tipo==='receita'?'Receita':'Despesa', Descricao:t.desc, Categoria:t.cat, Valor:t.valor }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Movimentações');
+  XLSX.writeFile(wb, 'MEI_Financeiro_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  toast('Exportado com sucesso!');
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ESTOQUE
+═══════════════════════════════════════════════════════════ */
+let estoque = [];   // { id, codigo, nome, qtd, custo, venda, validade }
+let scannerModo = 'cadastro';
+let scannerStream = null;
+let scannerInterval = null;
+
+function salvarEstoque() {
+  localStorage.setItem('mei_estoque_v1', JSON.stringify(estoque));
+}
+function carregarEstoque() {
+  try { estoque = JSON.parse(localStorage.getItem('mei_estoque_v1') || '[]'); } catch(e) { estoque = []; }
+}
+
+function cadastrarProduto() {
+  const codigo   = document.getElementById('eCodigo').value.trim();
+  const nome     = document.getElementById('eNome').value.trim();
+  const qtd      = Number(document.getElementById('eQtd').value);
+  const custo    = Number(document.getElementById('eCusto').value);
+  const venda    = Number(document.getElementById('eVenda').value);
+  const validade = document.getElementById('eValidade').value;
+
+  if (!nome)       { toast('Informe o nome do produto.', 'err'); return; }
+  if (!(qtd >= 0)) { toast('Informe a quantidade.', 'err'); return; }
+
+  // Verificar se produto já existe pelo código
+  const idx = codigo ? estoque.findIndex(p => p.codigo === codigo) : -1;
+  if (idx >= 0) {
+    // Atualizar existente
+    estoque[idx] = { ...estoque[idx], nome, qtd, custo, venda, validade };
+    toast('Produto atualizado!');
+  } else {
+    estoque.push({ id: uid(), codigo: codigo || uid(), nome, qtd, custo, venda, validade });
+    toast('Produto cadastrado!');
+  }
+  salvarEstoque();
+  ['eCodigo','eNome','eQtd','eCusto','eVenda','eValidade'].forEach(id => { document.getElementById(id).value = ''; });
+  renderEstoque();
+  verificarVencimentos();
+}
+
+function excluirProduto(id) {
+  if (!confirm('Excluir este produto do estoque?')) return;
+  estoque = estoque.filter(p => p.id !== id);
+  salvarEstoque();
+  renderEstoque();
+  verificarVencimentos();
+  toast('Produto removido.');
+}
+
+function renderEstoque() {
+  const busca = (document.getElementById('estBusca').value || '').toLowerCase();
+  let lista = estoque.filter(p =>
+    p.nome.toLowerCase().includes(busca) || p.codigo.toLowerCase().includes(busca)
+  );
+
+  document.getElementById('estCount').textContent = lista.length + ' produto(s)';
+  document.getElementById('estEmpty').style.display = lista.length ? 'none' : 'block';
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const em7  = new Date(hoje); em7.setDate(em7.getDate() + 7);
+
+  document.getElementById('estBody').innerHTML = lista.map(p => {
+    let vencCor = '', vencLabel = p.validade ? fmtData(p.validade) : '—';
+    if (p.validade) {
+      const dv = new Date(p.validade + 'T00:00:00');
+      if (dv < hoje)      { vencCor = 'color:var(--red)';   vencLabel += ' ⚠ Vencido'; }
+      else if (dv <= em7) { vencCor = 'color:var(--amber)'; vencLabel += ' ⚠ Vence em breve'; }
+    }
+    const estoqueCorLabel = p.qtd <= 0
+      ? '<span style="color:var(--red);font-weight:600">' + p.qtd + '</span>'
+      : p.qtd <= 3
+        ? '<span style="color:var(--amber);font-weight:600">' + p.qtd + '</span>'
+        : p.qtd;
+
+    return `<tr>
+      <td style="color:var(--text2);font-size:0.75rem;font-family:'DM Mono',monospace">${p.codigo}</td>
+      <td>${p.nome}</td>
+      <td class="r">${estoqueCorLabel}</td>
+      <td class="r mono" style="color:var(--text2)">${p.custo ? R(p.custo) : '—'}</td>
+      <td class="r mono" style="color:var(--green)">${p.venda ? R(p.venda) : '—'}</td>
+      <td style="${vencCor};font-size:0.78rem">${vencLabel}</td>
+      <td class="r">
+        <button class="del-btn" onclick="editarProduto('${p.id}')" title="Editar" style="margin-right:4px">✏</button>
+        <button class="del-btn" onclick="excluirProduto('${p.id}')" title="Excluir">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function editarProduto(id) {
+  const p = estoque.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('eCodigo').value  = p.codigo;
+  document.getElementById('eNome').value    = p.nome;
+  document.getElementById('eQtd').value     = p.qtd;
+  document.getElementById('eCusto').value   = p.custo || '';
+  document.getElementById('eVenda').value   = p.venda || '';
+  document.getElementById('eValidade').value = p.validade || '';
+  // Remover o antigo para recadastrar
+  estoque = estoque.filter(x => x.id !== id);
+  salvarEstoque();
+  toast('Produto carregado para edição.');
+}
+
+function verificarVencimentos() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const em7  = new Date(hoje); em7.setDate(em7.getDate() + 7);
+  const vencidos  = estoque.filter(p => p.validade && new Date(p.validade+'T00:00:00') < hoje);
+  const perto     = estoque.filter(p => p.validade && new Date(p.validade+'T00:00:00') >= hoje && new Date(p.validade+'T00:00:00') <= em7);
+  const el = document.getElementById('alertaVenc');
+  if (!el) return;
+  let msgs = [];
+  if (vencidos.length)  msgs.push('⚠ ' + vencidos.length + ' produto(s) vencido(s): ' + vencidos.map(p=>p.nome).join(', '));
+  if (perto.length)     msgs.push('🕐 ' + perto.length + ' produto(s) vencem nos próximos 7 dias: ' + perto.map(p=>p.nome).join(', '));
+  if (msgs.length) {
+    el.style.display = 'block';
+    el.innerHTML = '<div class="alerta-venc"><strong>Alertas de Validade</strong>' + msgs.join('<br>') + '</div>';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+/* ─── Venda por scanner: baixa do estoque ─────────────────── */
+function realizarVendaEstoque(codigo) {
+  const p = estoque.find(x => x.codigo === codigo);
+  if (!p) { toast('Produto não encontrado: ' + codigo, 'err'); return; }
+  if (p.qtd <= 0) { toast('Estoque zerado para: ' + p.nome, 'err'); return; }
+  p.qtd--;
+  salvarEstoque();
+  // Lançar receita automaticamente
+  const hoje = new Date().toISOString().slice(0,10);
+  tx.push({ id: uid(), tipo:'receita', data:hoje, desc:'Venda: ' + p.nome, cat:'Revenda de Mercadoria', valor: p.venda || 0 });
+  salvar();
+  atualizarDashboard();
+  renderEstoque();
+  toast('✅ Venda registrada: ' + p.nome + ' (estoque: ' + p.qtd + ')');
+}
+
+/* ─── Scanner de câmera (ZXing — compatível com todos os navegadores) ── */
+let zxingReader = null;
+
+function abrirScanner(modo) {
+  scannerModo = modo;
+  document.getElementById('scannerModal').classList.add('aberto');
+  document.getElementById('scannerResultado').textContent = 'Iniciando câmera...';
+  document.getElementById('scannerManual').value = '';
+
+  // Verificar suporte básico
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    document.getElementById('scannerResultado').textContent =
+      'Câmera não suportada neste navegador. Use o campo manual abaixo.';
+    return;
+  }
+
+  // Verificar se ZXing carregou
+  if (typeof ZXing === 'undefined') {
+    document.getElementById('scannerResultado').textContent =
+      'Biblioteca de scanner não carregou (sem internet?). Use o campo manual.';
+    return;
+  }
+
+  try {
+    zxingReader = new ZXing.BrowserMultiFormatReader();
+    zxingReader.decodeFromConstraints(
+      { video: { facingMode: 'environment' } },
+      'scannerVideo',
+      (result, err) => {
+        if (result) {
+          const codigo = result.getText();
+          document.getElementById('scannerResultado').textContent = '✅ Código detectado: ' + codigo;
+          setTimeout(() => confirmarCodigo(codigo), 500);
+        }
+        // erros de frame são normais, ignorar
+      }
+    ).catch(() => {
+      document.getElementById('scannerResultado').textContent =
+        'Câmera bloqueada ou sem permissão. Use o campo manual abaixo.';
+    });
+    document.getElementById('scannerResultado').textContent =
+      'Câmera ativa — aponte para o código de barras.';
+  } catch(e) {
+    document.getElementById('scannerResultado').textContent =
+      'Erro ao iniciar câmera. Use o campo manual abaixo.';
+  }
+}
+
+function fecharScanner() {
+  if (zxingReader) {
+    try { zxingReader.reset(); } catch(e) {}
+    zxingReader = null;
+  }
+  if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+  document.getElementById('scannerModal').classList.remove('aberto');
+  const v = document.getElementById('scannerVideo');
+  if (v) v.srcObject = null;
+}
+
+function confirmarCodigoManual() {
+  const v = document.getElementById('scannerManual').value.trim();
+  if (!v) { toast('Digite um código.', 'err'); return; }
+  confirmarCodigo(v);
+}
+
+function confirmarCodigo(codigo) {
+  fecharScanner();
+  if (scannerModo === 'cadastro') {
+    document.getElementById('eCodigo').value = codigo;
+    // Tentar preencher nome se produto já existir
+    const p = estoque.find(x => x.codigo === codigo);
+    if (p) {
+      document.getElementById('eNome').value    = p.nome;
+      document.getElementById('eQtd').value     = p.qtd;
+      document.getElementById('eCusto').value   = p.custo || '';
+      document.getElementById('eVenda').value   = p.venda || '';
+      document.getElementById('eValidade').value = p.validade || '';
+      toast('Produto encontrado: ' + p.nome);
+    } else {
+      toast('Código capturado: ' + codigo + '. Preencha os dados.');
+    }
+  } else if (scannerModo === 'venda') {
+    realizarVendaEstoque(codigo);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   IMPORTAR XML NF-e
+═══════════════════════════════════════════════════════════ */
+function lerXmlNFe(xmlStr, tipoLancamento) {
+  try {
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(xmlStr, 'application/xml');
+    const erroParser = doc.querySelector('parsererror');
+    if (erroParser) { toast('XML inválido ou corrompido.', 'err'); return; }
+
+    // Funções auxiliares para pegar tag com ou sem namespace
+    const tag  = (el, name) => el ? el.querySelector(name) : null;
+    const txt  = (el, name) => { const n = tag(el, name); return n ? n.textContent.trim() : ''; };
+
+    const infNFe = doc.querySelector('infNFe');
+    if (!infNFe) { toast('Arquivo não é uma NF-e válida.', 'err'); return; }
+
+    // Data de emissão
+    const dhEmi  = txt(infNFe, 'dhEmi') || txt(infNFe, 'dEmi');
+    const data   = dhEmi ? dhEmi.slice(0,10) : new Date().toISOString().slice(0,10);
+
+    // Valor total
+    const vNF    = parseFloat(txt(infNFe, 'vNF') || '0');
+
+    // Emitente / Destinatário
+    const emit   = infNFe.querySelector('emit');
+    const dest   = infNFe.querySelector('dest');
+    const nomeEmit = txt(emit, 'xNome') || 'Emitente';
+    const nomeDest = txt(dest, 'xNome') || 'Destinatário';
+
+    // Número da nota
+    const nNF    = txt(infNFe, 'nNF');
+    const desc   = tipoLancamento === 'receita'
+      ? `NF-e nº${nNF} — Venda para ${nomeDest}`
+      : `NF-e nº${nNF} — Compra de ${nomeEmit}`;
+
+    // Lançar no financeiro
+    tx.push({
+      id: uid(), tipo: tipoLancamento, data, desc,
+      cat: tipoLancamento === 'receita' ? 'Prestação de Serviço' : 'Compra de Mercadoria para Revenda',
+      valor: vNF
+    });
+    salvar();
+    atualizarDashboard();
+    if (document.getElementById('tela-lancamentos').classList.contains('ativa')) renderTabela();
+
+    // Se for despesa (compra), tentar adicionar produtos ao estoque
+    if (tipoLancamento === 'despesa') {
+      const dets = infNFe.querySelectorAll('det');
+      let adicionados = 0;
+      dets.forEach(det => {
+        const prod   = det.querySelector('prod');
+        if (!prod) return;
+        const cEAN   = txt(prod, 'cEAN');
+        const xProd  = txt(prod, 'xProd');
+        const qCom   = parseFloat(txt(prod, 'qCom') || '1');
+        const vUnCom = parseFloat(txt(prod, 'vUnCom') || '0');
+        const dVal   = txt(prod, 'dVal') || ''; // validade (nem sempre presente)
+
+        const codigo = (cEAN && cEAN !== 'SEM GTIN') ? cEAN : uid();
+        const idx    = estoque.findIndex(p => p.codigo === codigo);
+        if (idx >= 0) {
+          estoque[idx].qtd += qCom;
+          if (vUnCom) estoque[idx].custo = vUnCom;
+        } else {
+          estoque.push({ id: uid(), codigo, nome: xProd, qtd: qCom, custo: vUnCom, venda: 0, validade: dVal });
+        }
+        adicionados++;
+      });
+      salvarEstoque();
+      renderEstoque();
+      verificarVencimentos();
+      toast(`NF-e importada! R$ ${vNF.toFixed(2)} lançado + ${adicionados} produto(s) no estoque.`);
+    } else {
+      toast(`NF-e importada! Receita de ${R(vNF)} lançada.`);
+    }
+  } catch(e) {
+    toast('Erro ao processar NF-e: ' + e.message, 'err');
+  }
+}
+
+document.getElementById('xmlReceita').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => lerXmlNFe(ev.target.result, 'receita');
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+});
+
+document.getElementById('xmlDespesa').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => lerXmlNFe(ev.target.result, 'despesa');
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+});
+
+/* ─── irPara: adicionar estoque ──────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════
+   GERADOR DE XML NF-e DE TESTE
+═══════════════════════════════════════════════════════════ */
+function gerarXmlTeste() {
+  const hoje = new Date().toISOString().slice(0,10);
+  const nNF  = String(Math.floor(Math.random()*90000)+10000);
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe">
+  <NFe>
+    <infNFe Id="NFe35240100000000000000550010000000001000000010">
+      <ide>
+        <cUF>35</cUF>
+        <nNF>${nNF}</nNF>
+        <dhEmi>${hoje}T10:00:00-03:00</dhEmi>
+        <mod>55</mod>
+      </ide>
+      <emit>
+        <CNPJ>12345678000195</CNPJ>
+        <xNome>Fornecedor Teste LTDA</xNome>
+      </emit>
+      <dest>
+        <CNPJ>98765432000100</CNPJ>
+        <xNome>MEI Teste</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>001</cProd>
+          <cEAN>7891000100103</cEAN>
+          <xProd>Produto Teste A</xProd>
+          <qCom>10</qCom>
+          <vUnCom>5.50</vUnCom>
+          <vProd>55.00</vProd>
+        </prod>
+      </det>
+      <det nItem="2">
+        <prod>
+          <cProd>002</cProd>
+          <cEAN>7894900011517</cEAN>
+          <xProd>Produto Teste B</xProd>
+          <qCom>5</qCom>
+          <vUnCom>12.00</vUnCom>
+          <vProd>60.00</vProd>
+        </prod>
+      </det>
+      <total>
+        <ICMSTot>
+          <vNF>115.00</vNF>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+</nfeProc>`;
+
+  // Fazer download do arquivo
+  const blob = new Blob([xml], { type: 'application/xml' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `nfe_teste_${nNF}.xml`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('XML de teste gerado! Importe-o em Receitas ou Despesas.');
+}
+/* ═══════════════════════════════════════════════════════════
+   TELA DE BLOQUEIO
+═══════════════════════════════════════════════════════════ */
+const SENHA_KEY   = 'mei_senha_v1';
+const SENHA_PAD   = 5; // dígitos
+let lockBuffer    = '';
+let lockModoConfig = false;
+let lockNovaSenha  = '';
+
+function lockSenhaDefinida() {
+  return !!localStorage.getItem(SENHA_KEY);
+}
+
+function lockVerificar() {
+  const senhaHash = localStorage.getItem(SENHA_KEY);
+  // Primeira vez: sem senha definida, pedir criação
+  if (!senhaHash) {
+    document.getElementById('lockSub').textContent = 'Crie uma senha de ' + SENHA_PAD + ' dígitos';
+    lockModoConfig = true;
+    lockNovaSenha  = '';
+    return;
+  }
+  document.getElementById('lockSub').textContent = 'Digite sua senha para entrar';
+}
+
+function lockHash(s) {
+  // Hash simples (não criptográfico, mas suficiente para uso offline)
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+  return String(h >>> 0);
+}
+
+function lockDigito(d) {
+  if (lockBuffer.length >= SENHA_PAD) return;
+  lockBuffer += d;
+  lockAtualizarDots();
+  if (lockBuffer.length === SENHA_PAD) {
+    setTimeout(lockConfirmar, 80);
+  }
+}
+
+function lockApagar() {
+  lockBuffer = lockBuffer.slice(0, -1);
+  lockAtualizarDots();
+  document.getElementById('lockErro').textContent = '';
+}
+
+function lockAtualizarDots(estado) {
+  for (let i = 0; i < SENHA_PAD; i++) {
+    const dot = document.getElementById('d' + i);
+    dot.className = 'lock-dot';
+    if (estado === 'erro') { dot.classList.add('erro'); }
+    else if (i < lockBuffer.length) { dot.classList.add('preenchido'); }
+  }
+}
+
+function lockConfirmar() {
+  if (lockModoConfig) {
+    // Modo criação/alteração de senha
+    if (!lockNovaSenha) {
+      // Primeira digitação: guardar e pedir confirmação
+      lockNovaSenha = lockBuffer;
+      lockBuffer    = '';
+      lockAtualizarDots();
+      document.getElementById('lockSub').textContent = 'Confirme a nova senha';
+      document.getElementById('lockErro').textContent = '';
+    } else {
+      // Segunda digitação: confirmar
+      if (lockBuffer === lockNovaSenha) {
+        localStorage.setItem(SENHA_KEY, lockHash(lockBuffer));
+        lockBuffer     = '';
+        lockNovaSenha  = '';
+        lockModoConfig = false;
+        lockAtualizarDots();
+        document.getElementById('lockScreen').classList.add('oculto');
+        toast('✅ Senha definida com sucesso!');
+      } else {
+        lockBuffer    = '';
+        lockNovaSenha = '';
+        lockAtualizarDots('erro');
+        document.getElementById('lockErro').textContent = 'Senhas diferentes. Tente novamente.';
+        document.getElementById('lockSub').textContent = 'Crie uma senha de ' + SENHA_PAD + ' dígitos';
+        setTimeout(() => { lockAtualizarDots(); }, 600);
+      }
+    }
+  } else {
+    // Modo login
+    const senhaHash = localStorage.getItem(SENHA_KEY);
+    if (lockHash(lockBuffer) === senhaHash) {
+      lockBuffer = '';
+      lockAtualizarDots();
+      document.getElementById('lockScreen').classList.add('oculto');
+      document.getElementById('lockErro').textContent = '';
+    } else {
+      lockAtualizarDots('erro');
+      document.getElementById('lockErro').textContent = 'Senha incorreta.';
+      lockBuffer = '';
+      setTimeout(() => { lockAtualizarDots(); }, 600);
+    }
+  }
+}
+
+function lockAbrirConfig() {
+  const senhaAtual = prompt('Digite a senha atual para alterá-la:');
+  if (senhaAtual === null) return;
+  const senhaHash = localStorage.getItem(SENHA_KEY);
+  if (senhaHash && lockHash(senhaAtual) !== senhaHash) {
+    alert('Senha incorreta.');
+    return;
+  }
+  lockModoConfig = true;
+  lockNovaSenha  = '';
+  lockBuffer     = '';
+  lockAtualizarDots();
+  document.getElementById('lockSub').textContent = 'Crie uma nova senha de ' + SENHA_PAD + ' dígitos';
+  document.getElementById('lockErro').textContent = '';
+  document.getElementById('lockScreen').classList.remove('oculto');
+}
+
+// Suporte ao teclado físico na tela de bloqueio
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('lockScreen').classList.contains('oculto')) return;
+  if (e.key >= '0' && e.key <= '9') lockDigito(e.key);
+  if (e.key === 'Backspace') lockApagar();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   BACKUP E RESTAURAÇÃO
+═══════════════════════════════════════════════════════════ */
+function exportarBackup() {
+  const dados = {
+    versao: 'mei-financeiro-v1',
+    data: new Date().toISOString(),
+    tx,
+    metas,
+    estoque
+  };
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const hoje = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = `backup-zenit-${hoje}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ Backup salvo! Guarde o arquivo em local seguro.');
+}
+
+document.getElementById('backupInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const dados = JSON.parse(ev.target.result);
+      if (!dados.versao || !dados.tx) { toast('Arquivo de backup inválido.', 'err'); return; }
+      if (!confirm(`Restaurar backup de ${dados.data ? new Date(dados.data).toLocaleDateString('pt-BR') : 'data desconhecida'}?\n\nIsso substituirá todos os dados atuais.`)) return;
+      tx      = dados.tx      || [];
+      metas   = dados.metas   || {};
+      estoque = dados.estoque || [];
+      salvar();
+      salvarMetas();
+      salvarEstoque();
+      if (metas[1]) document.getElementById('m1Input').value = metas[1];
+      if (metas[2]) document.getElementById('m2Input').value = metas[2];
+      if (metas[3]) document.getElementById('m3Input').value = metas[3];
+      atualizarDashboard();
+      renderTabela();
+      renderEstoque();
+      toast('✅ Backup restaurado com sucesso!');
+    } catch(err) {
+      toast('Erro ao ler backup: ' + err.message, 'err');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+});
+
+/* Backup automático semanal */
+function verificarBackupAutomatico() {
+  const ultima = localStorage.getItem('mei_ultimo_backup');
+  const agora  = Date.now();
+  const semana = 7 * 24 * 60 * 60 * 1000;
+  if (!ultima || agora - Number(ultima) > semana) {
+    if (tx.length > 0 || estoque.length > 0) {
+      setTimeout(() => {
+        if (confirm('💾 Faz mais de uma semana sem backup!\n\nDeseja salvar um backup agora? (Recomendado)')) {
+          exportarBackup();
+          localStorage.setItem('mei_ultimo_backup', String(Date.now()));
+        }
+      }, 2000);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PWA — INSTALAÇÃO COMO APP
+═══════════════════════════════════════════════════════════ */
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('btnInstalar').style.display = 'inline-flex';
+});
+
+async function instalarApp() {
+  if (!deferredPrompt) {
+    toast('Para instalar: no navegador, toque em "Adicionar à tela inicial" ou "Instalar app".', 'ok');
+    return;
+  }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    toast('✅ App instalado com sucesso!');
+    document.getElementById('btnInstalar').style.display = 'none';
+  }
+  deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('btnInstalar').style.display = 'none';
+  toast('✅ Zenit instalado!');
+});
+
+/* ═══════════════════════════════════════════════════════════
+   SERVICE WORKER (PWA offline)
+═══════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  const swCode = `
+const CACHE = 'zenit-v1';
+const ASSETS = [self.location.pathname];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(e.request))));
+});
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INICIALIZAÇÃO
+═══════════════════════════════════════════════════════════ */
+carregar();
+carregarEstoque();
+atualizarDashboard();
+verificarBackupAutomatico();
+lockVerificar();
+</script>
+</body>
+</html>
